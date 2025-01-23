@@ -1,7 +1,3 @@
-Here’s the updated **GitHub README** with an **alternative usage section** for the `.exe` file:
-
----
-
 # Anime File Renamer
 
 A Python script (and standalone `.exe`) to rename anime files with custom delimiters and advanced formatting. This tool is designed to clean up and organize anime filenames by adding season numbers, episode numbers, and removing unwanted tags like `(Dub)` or `[Subbed]`.
