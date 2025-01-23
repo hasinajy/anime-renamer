@@ -1,14 +1,15 @@
 import os
 import argparse
 
-def rename_anime_files(directory, start_episode, season):
+def rename_anime_files(directory, start_episode, season, delimiter):
     """
-    Rename anime files with season support and episode offset
+    Rename anime files with custom delimiters and advanced formatting
     
     Args:
         directory (str): Path to directory containing files
         start_episode (int): Starting episode number
         season (int|None): Season number (None for no season)
+        delimiter (str|None): Custom delimiter to truncate title
     """
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
@@ -22,17 +23,18 @@ def rename_anime_files(directory, start_episode, season):
             rest = base[len('Watch '):]
             title_part, episode_part = rest.split(' Episode ', 1)
             
+            # Process custom delimiter if specified
+            if delimiter:
+                title_part = title_part.split(delimiter, 1)[0].strip()
+            
             original_episode = int(episode_part.split()[0])
             calculated_episode = original_episode + (start_episode - 1)
             
-            # Build new filename based on season presence
-            if season:
-                new_base = f"{title_part} - S{season:02d} - E{calculated_episode:02d}"
-            else:
-                new_base = f"{title_part} - E{calculated_episode:02d}"
+            # Build filename components
+            season_str = f"S{season:02d} - " if season else ""
+            new_base = f"{title_part} - {season_str}E{calculated_episode:02d}"
             
             new_filename = new_base + ext
-            
             os.rename(
                 os.path.join(directory, filename),
                 os.path.join(directory, new_filename)
@@ -44,13 +46,13 @@ def rename_anime_files(directory, start_episode, season):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Anime File Renamer with Season Support",
+        description="Anime File Renamer with Custom Delimiters",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""Examples:
-  %(prog)s --path "/anime" --season 1          # Season 1 with default numbering
-  %(prog)s -p ~/anime -s 5 -S 2               # Season 2, start from episode 5
-  %(prog)s --season 3                          # Season 3, current directory
-  %(prog)s                                     # No season, default start 1"""
+  %(prog)s --delimiter "(Dub)"           # Remove dub indicator
+  %(prog)s -S 2 -d " [Subbed]"           # Season 2, remove subbed tag
+  %(prog)s -s 10 -d " - "                # Start from 10, clean hyphenated titles
+  %(prog)s -S 1 -s 1 -d "(Uncensored)"   # Season 1, remove uncensored tag"""
     )
     
     parser.add_argument(
@@ -72,6 +74,12 @@ if __name__ == '__main__':
         default=None,
         help="Season number (≥1, adds season to filename)"
     )
+    parser.add_argument(
+        '-d', '--delimiter',
+        type=str,
+        default=None,
+        help="Custom delimiter to truncate title (e.g. '(Dub)')"
+    )
     
     args = parser.parse_args()
     
@@ -87,4 +95,4 @@ if __name__ == '__main__':
         print("Error: Season number must be ≥1")
         exit(1)
         
-    rename_anime_files(args.path, args.start_episode, args.season)
+    rename_anime_files(args.path, args.start_episode, args.season, args.delimiter)
