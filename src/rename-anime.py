@@ -1,20 +1,29 @@
 import os
+import argparse
 
-def rename_anime_files(directory='.'):
+def rename_anime_files(directory):
+    """
+    Rename anime files in the specified directory following the pattern:
+    "Anime Title - EXX.ext" based on the original "Watch [Title] Episode [XX] ..." format
+    
+    Args:
+        directory (str): Path to directory containing files to rename
+    """
     for filename in os.listdir(directory):
-        # Skip non-files and files that don't start with 'Watch '
-        if not os.path.isfile(os.path.join(directory, filename)) or not filename.startswith('Watch '):
+        file_path = os.path.join(directory, filename)
+        
+        # Skip directories and non-matching files
+        if not os.path.isfile(file_path) or not filename.startswith('Watch '):
             continue
 
-        # Split filename and extension
         base, ext = os.path.splitext(filename)
         
         try:
-            # Remove 'Watch ' and split into title/episode parts
+            # Extract title and episode number
             rest = base[len('Watch '):]
             title_part, episode_part = rest.split(' Episode ', 1)
             
-            # Extract episode number and format
+            # Format episode number with leading zero
             episode_number = int(episode_part.split()[0])
             new_base = f"{title_part} - E{episode_number:02d}"
             
@@ -30,4 +39,26 @@ def rename_anime_files(directory='.'):
             print(f"Skipping {filename}: {str(e)}")
 
 if __name__ == '__main__':
-    rename_anime_files()
+    parser = argparse.ArgumentParser(
+        description="Anime File Renamer - Rename anime files from 'Watch [Title] Episode [XX]' format to 'Title - EXX' format",
+        formatter_class=argparse.RawTextHelpFormatter,
+        epilog="""Examples:
+  %(prog)s --path "/anime/my_hero_Academia"
+  %(prog)s  # Uses current directory
+  %(prog)s --help  # Show this help message"""
+    )
+    
+    parser.add_argument(
+        '-p', '--path',
+        type=str,
+        default='.',
+        help="Directory containing anime files (default: current directory)"
+    )
+    
+    args = parser.parse_args()
+    
+    if not os.path.isdir(args.path):
+        print(f"Error: Directory does not exist - {args.path}")
+        exit(1)
+        
+    rename_anime_files(args.path)
