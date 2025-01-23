@@ -1,34 +1,32 @@
 import os
 import argparse
 
-def rename_anime_files(directory):
+def rename_anime_files(directory, start_episode):
     """
-    Rename anime files in the specified directory following the pattern:
-    "Anime Title - EXX.ext" based on the original "Watch [Title] Episode [XX] ..." format
+    Rename anime files with configurable starting episode number
     
     Args:
         directory (str): Path to directory containing files to rename
+        start_episode (int): Starting episode number for the first file
     """
     for filename in os.listdir(directory):
         file_path = os.path.join(directory, filename)
         
-        # Skip directories and non-matching files
         if not os.path.isfile(file_path) or not filename.startswith('Watch '):
             continue
 
         base, ext = os.path.splitext(filename)
         
         try:
-            # Extract title and episode number
             rest = base[len('Watch '):]
             title_part, episode_part = rest.split(' Episode ', 1)
             
-            # Format episode number with leading zero
-            episode_number = int(episode_part.split()[0])
-            new_base = f"{title_part} - E{episode_number:02d}"
+            original_episode = int(episode_part.split()[0])
+            calculated_episode = original_episode + (start_episode - 1)
             
-            # Create new filename and rename
+            new_base = f"{title_part} - E{calculated_episode:02d}"
             new_filename = new_base + ext
+            
             os.rename(
                 os.path.join(directory, filename),
                 os.path.join(directory, new_filename)
@@ -40,12 +38,12 @@ def rename_anime_files(directory):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Anime File Renamer - Rename anime files from 'Watch [Title] Episode [XX]' format to 'Title - EXX' format",
+        description="Anime File Renamer with Episode Offset",
         formatter_class=argparse.RawTextHelpFormatter,
         epilog="""Examples:
-  %(prog)s --path "/anime/my_hero_Academia"
-  %(prog)s  # Uses current directory
-  %(prog)s --help  # Show this help message"""
+  %(prog)s --path "/anime" --start 10  # Start numbering from 10
+  %(prog)s -p ~/anime -s 5             # Start numbering from 5
+  %(prog)s                             # Use current dir with default numbering"""
     )
     
     parser.add_argument(
@@ -54,6 +52,13 @@ if __name__ == '__main__':
         default='.',
         help="Directory containing anime files (default: current directory)"
     )
+    parser.add_argument(
+        '-s', '--start',
+        type=int,
+        dest='start_episode',
+        default=1,
+        help="Starting episode number (≥1, default: %(default)s)"
+    )
     
     args = parser.parse_args()
     
@@ -61,4 +66,8 @@ if __name__ == '__main__':
         print(f"Error: Directory does not exist - {args.path}")
         exit(1)
         
-    rename_anime_files(args.path)
+    if args.start_episode < 1:
+        print("Error: Starting episode must be ≥1")
+        exit(1)
+        
+    rename_anime_files(args.path, args.start_episode)
